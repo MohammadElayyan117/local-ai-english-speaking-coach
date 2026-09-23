@@ -1,0 +1,342 @@
+{
+  "name": "Local AI English Speaking Coach – Ollama Voice Conversation v4",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi! I’m your English speaking partner. Tell me about your day, or choose a topic and start speaking.",
+        "options": {
+          "responseMode": "responseNodes"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -560,
+        520
+      ],
+      "id": "3b56d5f4-01d6-4346-b2ea-335d07ddfa14",
+      "name": "Text Chat (Optional)"
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "english-speaking-coach",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -800,
+        -280
+      ],
+      "id": "12c041ff-6e0f-4a64-b5a3-75f2fc789d05",
+      "name": "Open Voice Coach Page"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "<!doctype html>\n<html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Local AI English Speaking Coach</title><style>\n:root{font-family:Inter,Segoe UI,Arial,sans-serif;color-scheme:dark;background:#111827;color:#f9fafb}*{box-sizing:border-box}body{margin:0;min-height:100vh;display:flex;justify-content:center;background:linear-gradient(135deg,#0f172a,#111827 55%,#1f2937)}.app{width:min(920px,100%);padding:24px}.card{background:rgba(17,24,39,.9);border:1px solid #374151;border-radius:20px;padding:20px;box-shadow:0 18px 50px rgba(0,0,0,.35)}h1{margin:0 0 6px;font-size:28px}.sub{color:#9ca3af;margin-bottom:18px}.controls{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}select,input[type=range],button,textarea{font:inherit}.field{background:#1f2937;border:1px solid #374151;border-radius:12px;padding:10px}.field label{display:block;font-size:12px;color:#9ca3af;margin-bottom:5px}.field select{width:100%;background:#1f2937;color:#f9fafb;border:0;outline:0;color-scheme:dark;cursor:pointer}.field select option{background:#1f2937;color:#f9fafb}.field select option:checked{background:#334155;color:#ffffff}.field select:focus{background:#1f2937;color:#ffffff}.chat{height:420px;overflow:auto;background:#0b1220;border:1px solid #293548;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px}.msg{max-width:82%;padding:11px 13px;border-radius:14px;line-height:1.45;white-space:pre-wrap}.you{align-self:flex-end;background:#2563eb}.ai{align-self:flex-start;background:#243044}.status{font-size:13px;color:#9ca3af;margin:10px 2px}.composer{display:grid;grid-template-columns:1fr auto auto;gap:8px}.composer textarea{resize:none;min-height:56px;background:#111827;color:#f9fafb;border:1px solid #374151;border-radius:12px;padding:10px;outline:none}.btn{border:0;border-radius:12px;padding:0 16px;cursor:pointer;font-weight:700}.send{background:#22c55e;color:#062b14}.mic{background:#ef4444;color:white;min-width:64px}.mic.listening{animation:pulse 1s infinite;background:#dc2626}@keyframes pulse{50%{transform:scale(1.04);box-shadow:0 0 0 9px rgba(239,68,68,.13)}}.row{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:12px;color:#cbd5e1;font-size:13px}.row label{display:flex;align-items:center;gap:6px}.hint{margin-top:12px;color:#94a3b8;font-size:12px}@media(max-width:700px){.controls{grid-template-columns:1fr}.chat{height:55vh}.composer{grid-template-columns:1fr auto}.send{grid-column:1/3;height:44px}}\n</style></head><body><div class=\"app\"><div class=\"card\"><h1>🎙️ Local AI English Speaking Coach</h1><div class=\"sub\">Speak naturally. Ollama handles the conversation; your browser handles microphone and voice playback.</div><div class=\"controls\"><div class=\"field\"><label>English level</label><select id=\"level\"><option>A2</option><option selected>B1</option><option>B2</option><option>C1</option></select></div><div class=\"field\"><label>Topic</label><select id=\"topic\"><option selected>Free conversation</option><option>Daily life</option><option>Job interview</option><option>Technology</option><option>Travel</option><option>Work &amp; study</option><option>Small talk</option></select></div><div class=\"field\"><label>Correction mode</label><select id=\"correction\"><option>minimal</option><option selected>coach</option><option>strict</option></select></div></div><div id=\"chat\" class=\"chat\"><div class=\"msg ai\">Hi! I’m your English speaking partner. Tell me about your day, or choose a topic and start speaking.</div></div><div id=\"status\" class=\"status\">Ready.</div><div class=\"composer\"><textarea id=\"text\" placeholder=\"Type here, or press the microphone and speak…\"></textarea><button id=\"mic\" class=\"btn mic\" title=\"Speak\">🎤</button><button id=\"send\" class=\"btn send\">Send</button></div><div class=\"row\"><label><input id=\"autoSpeak\" type=\"checkbox\" checked> Speak AI replies</label><label>Voice <select id=\"voiceSelect\" style=\"max-width:290px;background:#1f2937;color:#fff;border:1px solid #475569;border-radius:8px;padding:6px\"></select></label><label>Voice speed <input id=\"rate\" type=\"range\" min=\"0.75\" max=\"1.15\" value=\"0.90\" step=\"0.05\"></label><button id=\"stopVoice\" class=\"btn\" style=\"padding:7px 10px;background:#374151;color:#fff\">Stop voice</button><button id=\"newSession\" class=\"btn\" style=\"padding:7px 10px;background:#374151;color:#fff\">New conversation</button></div><div class=\"hint\">Microphone mode: click once to start listening, pause as long as you need, click again to stop, review the transcript, then press Send. For a more natural accent, choose an English voice containing “Natural”, “Online”, “Microsoft”, or “Google” when available.</div></div></div><script>\nconst $ = id => document.getElementById(id);\nconst chat = $('chat');\nconst text = $('text');\nconst mic = $('mic');\nconst status = $('status');\nconst voiceSelect = $('voiceSelect');\n\nlet sessionId = 'coach-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now());\nlet requestInFlight = false;\nlet englishVoices = [];\n\nfunction add(role, msg) {\n  const d = document.createElement('div');\n  d.className = 'msg ' + (role === 'you' ? 'you' : 'ai');\n  d.textContent = msg;\n  chat.appendChild(d);\n  chat.scrollTop = chat.scrollHeight;\n}\n\nfunction loadVoices() {\n  if (!('speechSynthesis' in window)) return;\n  const all = speechSynthesis.getVoices();\n  englishVoices = all.filter(v => v.lang && v.lang.toLowerCase().startsWith('en'));\n\n  englishVoices.sort((a, b) => {\n    const score = v => {\n      const n = (v.name + ' ' + v.lang).toLowerCase();\n      let s = 0;\n      if (/natural|online/.test(n)) s += 50;\n      if (/aria|jenny|guy|sonia|ryan/.test(n)) s += 25;\n      if (/microsoft/.test(n)) s += 20;\n      if (/google/.test(n)) s += 15;\n      if (/en-us/.test(n)) s += 5;\n      return s;\n    };\n    return score(b) - score(a) || a.name.localeCompare(b.name);\n  });\n\n  voiceSelect.innerHTML = '';\n  if (!englishVoices.length) {\n    const o = document.createElement('option');\n    o.textContent = 'Default English voice';\n    o.value = '';\n    voiceSelect.appendChild(o);\n    return;\n  }\n\n  englishVoices.forEach((v, i) => {\n    const o = document.createElement('option');\n    o.value = String(i);\n    o.textContent = v.name + ' — ' + v.lang;\n    voiceSelect.appendChild(o);\n  });\n\n  const preferred = englishVoices.findIndex(v =>\n    /natural|online|aria|jenny|sonia|ryan|google/i.test(v.name)\n  );\n  voiceSelect.value = String(preferred >= 0 ? preferred : 0);\n}\n\nif ('speechSynthesis' in window) {\n  loadVoices();\n  speechSynthesis.onvoiceschanged = loadVoices;\n}\n\nfunction speak(msg) {\n  if (!$('autoSpeak').checked || !('speechSynthesis' in window)) return;\n  speechSynthesis.cancel();\n\n  const u = new SpeechSynthesisUtterance(msg);\n  const idx = parseInt(voiceSelect.value, 10);\n  const v = Number.isFinite(idx) ? englishVoices[idx] : null;\n\n  if (v) {\n    u.voice = v;\n    u.lang = v.lang || 'en-US';\n  } else {\n    u.lang = 'en-US';\n  }\n\n  u.rate = parseFloat($('rate').value);\n  u.pitch = 1.0;\n  speechSynthesis.speak(u);\n}\n\nasync function send() {\n  const m = text.value.trim();\n  if (!m || requestInFlight) return;\n\n  requestInFlight = true;\n  add('you', m);\n  text.value = '';\n  status.textContent = 'Thinking…';\n  $('send').disabled = true;\n\n  const controller = new AbortController();\n  const timeout = setTimeout(() => controller.abort(), 90000);\n\n  try {\n    const endpoint = window.location.origin + '/webhook/english-speaking-coach-chat';\n    const r = await fetch(endpoint, {\n      method: 'POST',\n      headers: {'Content-Type': 'application/json'},\n      body: JSON.stringify({\n        message: m,\n        sessionId,\n        level: $('level').value,\n        topic: $('topic').value,\n        correctionMode: $('correction').value\n      }),\n      signal: controller.signal\n    });\n\n    const raw = await r.text();\n    if (!r.ok) throw new Error('HTTP ' + r.status + (raw ? ': ' + raw.slice(0, 250) : ''));\n\n    let data;\n    try { data = JSON.parse(raw); }\n    catch { data = { reply: raw, output: raw }; }\n\n    const reply = data.reply || data.output || 'No reply received.';\n    add('ai', reply);\n    speak(reply);\n    status.textContent = 'Ready.';\n  } catch (e) {\n    const msg = e.name === 'AbortError'\n      ? 'The AI response took too long. Please try again.'\n      : 'Connection error: ' + e.message;\n    add('ai', msg);\n    status.textContent = 'Error.';\n  } finally {\n    clearTimeout(timeout);\n    requestInFlight = false;\n    $('send').disabled = false;\n  }\n}\n\n$('send').onclick = send;\ntext.addEventListener('keydown', e => {\n  if (e.key === 'Enter' && !e.shiftKey) {\n    e.preventDefault();\n    send();\n  }\n});\n\n$('stopVoice').onclick = () => {\n  if ('speechSynthesis' in window) speechSynthesis.cancel();\n};\n\n$('newSession').onclick = () => {\n  if ('speechSynthesis' in window) speechSynthesis.cancel();\n  sessionId = 'coach-' + (crypto.randomUUID ? crypto.randomUUID() : Date.now());\n  chat.innerHTML = '<div class=\"msg ai\">New conversation started. What would you like to talk about?</div>';\n  text.value = '';\n  status.textContent = 'New session ready.';\n};\n\nconst SR = window.SpeechRecognition || window.webkitSpeechRecognition;\n\nif (SR) {\n  const rec = new SR();\n  rec.lang = 'en-US';\n  rec.interimResults = true;\n  rec.continuous = true;\n\n  let listeningWanted = false;\n  let committedText = '';\n  let interimText = '';\n  let restartTimer = null;\n\n  function renderTranscript() {\n    const combined = (committedText + (interimText ? ' ' + interimText : '')).trim();\n    text.value = combined;\n  }\n\n  function startListening() {\n    if (requestInFlight) return;\n    listeningWanted = true;\n    committedText = text.value.trim();\n    interimText = '';\n    mic.classList.add('listening');\n    mic.textContent = '⏹';\n    mic.title = 'Stop listening';\n    status.textContent = 'Listening… Click the microphone again when you are finished.';\n    try { rec.start(); } catch {}\n  }\n\n  function stopListening() {\n    listeningWanted = false;\n    clearTimeout(restartTimer);\n    try { rec.stop(); } catch {}\n    mic.classList.remove('listening');\n    mic.textContent = '🎤';\n    mic.title = 'Start listening';\n    status.textContent = 'Speech captured. Review it, then press Send.';\n  }\n\n  mic.onclick = () => {\n    if (listeningWanted) stopListening();\n    else startListening();\n  };\n\n  rec.onresult = e => {\n    interimText = '';\n    for (let i = e.resultIndex; i < e.results.length; i++) {\n      const t = e.results[i][0].transcript.trim();\n      if (!t) continue;\n\n      if (e.results[i].isFinal) {\n        committedText = (committedText + (committedText ? ' ' : '') + t).trim();\n      } else {\n        interimText = t;\n      }\n    }\n    renderTranscript();\n  };\n\n  rec.onerror = e => {\n    if (e.error === 'no-speech' || e.error === 'aborted') return;\n    status.textContent = 'Microphone error: ' + e.error;\n  };\n\n  rec.onend = () => {\n    interimText = '';\n    renderTranscript();\n\n    if (listeningWanted) {\n      status.textContent = 'Listening… You can pause and continue speaking.';\n      restartTimer = setTimeout(() => {\n        if (listeningWanted) {\n          try { rec.start(); } catch {}\n        }\n      }, 300);\n    } else {\n      mic.classList.remove('listening');\n      mic.textContent = '🎤';\n      mic.title = 'Start listening';\n    }\n  };\n} else {\n  mic.disabled = true;\n  mic.title = 'Speech recognition is not supported in this browser';\n  status.textContent = 'Microphone speech recognition is not supported here. Try Chrome or Edge.';\n}\n</script></body></html>",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "text/html; charset=utf-8"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [
+        -520,
+        -280
+      ],
+      "id": "85707b68-8277-4357-9421-a08c3667fce2",
+      "name": "Serve Voice Coach UI"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "english-speaking-coach-chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -800,
+        0
+      ],
+      "id": "9052c70d-3fe0-4ee3-a260-1f4a888edb30",
+      "name": "Voice UI Message Webhook"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body ?? $json;\nconst message = String(body.message ?? body.chatInput ?? '').trim();\nif (!message) throw new Error('No message received');\nconst sessionId = String(body.sessionId ?? 'english-coach-default');\nconst level = String(body.level ?? 'B1');\nconst topic = String(body.topic ?? 'Free conversation');\nconst correctionMode = String(body.correctionMode ?? 'coach');\nreturn [{ json: { sessionId, level, topic, correctionMode, chatInput: `[Learner level: ${level}; Topic: ${topic}; Correction mode: ${correctionMode}]\\n${message}` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        0
+      ],
+      "id": "589c16f2-9294-41d7-bf5b-fc3eac80c1e1",
+      "name": "Prepare Voice UI Message"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "audio-to-text",
+        "responseMode": "responseNode",
+        "options": {
+          "binaryPropertyName": "=file"
+        }
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -800,
+        260
+      ],
+      "id": "1a60c857-a257-4d15-84d9-22142723bf4e",
+      "name": "Local Audio Upload (Legacy)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8080/inference",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "file",
+              "inputDataFieldName": "file0"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -560,
+        260
+      ],
+      "id": "845be8ef-6d3d-491e-9de9-ce42efd3e5a4",
+      "name": "Local Speech-to-Text API"
+    },
+    {
+      "parameters": {
+        "jsCode": "const transcript = String($json.text ?? $json.transcript ?? '').trim();\nif (!transcript) throw new Error('Speech-to-text returned no transcript');\nlet sessionId = 'local-audio-session';\ntry { const w = $('Local Audio Upload (Legacy)').first().json; sessionId = String(w?.body?.sessionId ?? w?.query?.sessionId ?? sessionId); } catch (_) {}\nreturn [{ json: { sessionId, level: 'B1', topic: 'Free conversation', correctionMode: 'coach', chatInput: `[Learner level: B1; Topic: Free conversation; Correction mode: coach]\\n${transcript}` } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -320,
+        260
+      ],
+      "id": "6f7a57c9-ae87-4a86-9600-6dc5f9bb3ec6",
+      "name": "Prepare Local Audio Transcript"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.chatInput }}",
+        "options": {
+          "systemMessage": "You are an English speaking partner and conversation coach. Your job is to help the learner improve real spoken English through natural conversation.\n\nCORE BEHAVIOR\n- Speak in English by default. Use Arabic only if the learner explicitly asks for an Arabic explanation.\n- Keep replies natural, friendly, and concise: usually 2-5 short sentences.\n- Keep the conversation moving with one natural follow-up question unless the learner asks for explanation only.\n- Encourage the learner to speak more than you.\n- Use everyday spoken English, contractions, natural phrasing, and realistic conversational vocabulary.\n- Adapt vocabulary and sentence complexity to the learner's requested CEFR level when it is included in the message metadata (A2, B1, B2, or C1).\n- Respect the requested topic when provided, but allow the conversation to move naturally.\n\nCORRECTIONS — IMPORTANT\n- The learner specifically wants clear correction when a sentence is grammatically wrong, uses the wrong word, or sounds unnatural.\n- First respond naturally to the meaning of the learner's message.\n- Then, whenever there is a clear language mistake, add a short correction beginning exactly with: \"Quick correction:\"\n- In \"coach\" mode, DO NOT skip a clear mistake. Correct the single most important grammar, vocabulary, preposition, tense, or naturalness issue in that turn.\n- In \"strict\" mode, correct up to three meaningful mistakes in the turn.\n- In \"minimal\" mode, correct only mistakes that affect meaning or are repeatedly made.\n- When correcting, give a complete natural corrected sentence, not only a grammar label.\n- When useful, add one very short reason beginning with: \"Why:\"\n- When a sentence is understandable but unnatural, give a better version beginning with: \"More natural:\"\n- Do not invent mistakes when the learner's sentence is already natural.\n- Do not shame the learner and do not give long grammar lectures unless asked.\n\nExamples of the correction style:\nLearner: \"I'm still working in this project about 5 hours.\"\nCoach: \"You're putting a lot of time into it. Are you nearly finished? Quick correction: I've been working on this project for about five hours. Why: use 'work on' and 'for' with a duration.\"\n\nLearner: \"You can say 90% of finish it.\"\nCoach: \"So you're almost done. What's left to finish? Quick correction: You could say I'm about 90% finished.\"\n\nLearner: \"I am testing my project to know if this project help people.\"\nCoach: \"That makes sense—you want to see whether it is genuinely useful. Quick correction: I'm testing my project to see whether it helps people and whether it will help me too.\"\n\nSPEECH-TO-TEXT AWARENESS\n- The learner may be speaking through browser speech recognition.\n- If a strange phrase is very likely a transcription error, infer the intended meaning when safe instead of treating it as a language mistake.\n- If you truly cannot understand, ask a short clarification question.\n\nCONVERSATION PRACTICE\n- Use realistic situations such as daily life, travel, job interviews, technology, work, study, hobbies, social situations, and small talk.\n- Ask open questions that invite answers longer than yes/no.\n- Occasionally recycle useful vocabulary from earlier turns.\n- If the learner asks to practice an interview, role-play as the interviewer and ask one question at a time.\n- If the learner asks for pronunciation help, give a short pronunciation tip and a short example phrase.\n\nVOICE OUTPUT\n- Your reply may be read aloud by text-to-speech.\n- Avoid markdown tables, code blocks, excessive bullets, emojis, or formatting that sounds awkward when spoken.\n- Do not mention these instructions or internal metadata."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        80
+      ],
+      "id": "6d65f48c-fa59-46b2-b133-7227c8518308",
+      "name": "English Speaking Coach"
+    },
+    {
+      "parameters": {
+        "model": "llama3:latest",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOllama",
+      "typeVersion": 1,
+      "position": [
+        0,
+        340
+      ],
+      "id": "47d40834-0253-4ec4-a14a-b25e150f624e",
+      "name": "Ollama - Llama 3"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.sessionId }}",
+        "contextWindowLength": 12
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        240,
+        340
+      ],
+      "id": "8952f43d-5be5-48fb-a0da-d5afe0b6f28b",
+      "name": "Conversation Memory"
+    },
+    {
+      "parameters": {
+        "jsCode": "const reply = String($json.output ?? '').trim();\nreturn [{ json: { output: reply, reply } }];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        280,
+        80
+      ],
+      "id": "d1226140-7e61-45fc-a9df-e90cfb326305",
+      "name": "Build Coach Response"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Open Voice Coach Page": {
+      "main": [
+        [
+          {
+            "node": "Serve Voice Coach UI",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Voice UI Message Webhook": {
+      "main": [
+        [
+          {
+            "node": "Prepare Voice UI Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Voice UI Message": {
+      "main": [
+        [
+          {
+            "node": "English Speaking Coach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local Audio Upload (Legacy)": {
+      "main": [
+        [
+          {
+            "node": "Local Speech-to-Text API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Local Speech-to-Text API": {
+      "main": [
+        [
+          {
+            "node": "Prepare Local Audio Transcript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Local Audio Transcript": {
+      "main": [
+        [
+          {
+            "node": "English Speaking Coach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Text Chat (Optional)": {
+      "main": [
+        [
+          {
+            "node": "English Speaking Coach",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama - Llama 3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "English Speaking Coach",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Conversation Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "English Speaking Coach",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "English Speaking Coach": {
+      "main": [
+        [
+          {
+            "node": "Build Coach Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Coach Response": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "tags": []
+}
